@@ -1,0 +1,63 @@
+CREATE TABLE rules (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hasil VARCHAR(10)
+);
+
+CREATE TABLE conditions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    rule_id INT,
+    parameter VARCHAR(50),
+    nilai VARCHAR(50),
+    FOREIGN KEY (rule_id) REFERENCES rules(id)
+);
+
+INSERT INTO rules (id, hasil) VALUES
+(1, 'Ya'),
+(2, 'Tidak'),
+(3, 'Ya'),
+(4, 'Tidak'),
+(5, 'Ya'),
+(6, 'Tidak'),
+(7, 'Ya'),
+(8, 'Ya'),
+(9, 'Tidak'),
+(10, 'Tidak');
+
+INSERT INTO conditions (rule_id, parameter, nilai) VALUES
+
+(1,'absen','Kurang Rajin'),
+(1,'lembur','Ya'),
+(1,'dinas_luar','Ya'),
+
+(2,'absen','Kurang Rajin'),
+(2,'lembur','Tidak'),
+
+(3,'absen','Rajin'),
+(3,'dinas_luar','Ya'),
+
+(4,'absen','Rajin'),
+(4,'dinas_luar','Tidak'),
+(4,'lembur','Tidak'),
+
+(5,'absen','Rajin'),
+(5,'lembur','Ya'),
+
+(6,'absen','Kurang Rajin'),
+(6,'dinas_luar','Tidak'),
+(6,'masa_kerja','Baru'),
+
+(7,'absen','Kurang Rajin'),
+(7,'lembur','Ya'),
+(7,'masa_kerja','Lama'),
+
+(8,'absen','Rajin'),
+(8,'masa_kerja','Lama'),
+(8,'kinerja','Sangat Baik'),
+
+(9,'absen','Rajin'),
+(9,'masa_kerja','Baru'),
+(9,'lembur','Tidak'),
+
+(10,'absen','Kurang Rajin'),
+(10,'kinerja','Baik'),
+(10,'dinas_luar','Tidak');
