@@ -1,0 +1,245 @@
+import streamlit as st
+import mysql.connector
+
+# =========================================
+# KONFIGURASI HALAMAN
+# =========================================
+
+st.set_page_config(
+    page_title="Sistem Penentuan Bonus Karyawan",
+    page_icon="💰",
+    layout="centered"
+)
+
+# =========================================
+# DESAIN FRONTEND / UI
+# =========================================
+
+st.markdown("""
+<style>
+
+/* Import Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Semua Font */
+html, body, [class*="css"] {
+    font-family: 'Poppins', sans-serif;
+    color: white;
+}
+
+/* Background */
+.stApp {
+    background: linear-gradient(to bottom right, #2c3e50, #34495e);
+}
+
+/* Container */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Judul */
+/* Judul */
+h1 {
+    color: #ffffff !important; 
+    text-align: center;
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7); 
+}
+
+/* Text */
+p {
+    color: #ecf0f1;
+    text-align: center;
+    font-size: 16px;
+}
+
+/* Label */
+label {
+    color: white !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+}
+
+/* Selectbox */
+.stSelectbox div[data-baseweb="select"] {
+    background: linear-gradient(to right, #00e676, #69f0ae);
+    border-radius: 14px;
+    border: none;
+    min-height: 52px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Isi selectbox */
+.stSelectbox * {
+    color: #0f172a !important;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* Tombol */
+.stButton>button {
+    background: linear-gradient(to right, #00e676, #1de9b6);
+    color: #0f172a;
+    border: none;
+    border-radius: 14px;
+    height: 52px;
+    width: 100%;
+    font-size: 17px;
+    font-weight: bold;
+    margin-top: 15px;
+    transition: 0.3s;
+    box-shadow: 0px 4px 15px rgba(0, 230, 118, 0.4);
+}
+
+/* Hover tombol */
+.stButton>button:hover {
+    transform: scale(1.02);
+    background: linear-gradient(to right, #69f0ae, #00e5ff);
+    color: black;
+}
+
+/* Hasil */
+[data-testid="stAlert"] {
+    border-radius: 14px;
+    font-size: 15px;
+}
+
+/* Subjudul */
+h3 {
+    color: white;
+    font-weight: 600;
+}
+
+/* Garis */
+hr {
+    border: 1px solid #64748b;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# =========================================
+# KONEKSI DATABASE
+# =========================================
+
+koneksi = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="",
+    database="sistem_bonus_karyawan"
+)
+
+# =========================================
+# HEADER
+# =========================================
+
+st.title("💰 Sistem Penentuan Bonus Karyawan")
+
+st.write("Silakan isi data karyawan untuk menentukan bonus.")
+
+st.markdown("---")
+
+# =========================================
+# INPUT USER
+# =========================================
+
+absen = st.selectbox(
+    "Absen",
+    ["Rajin", "Kurang Rajin"]
+)
+
+lembur = st.selectbox(
+    "Lembur",
+    ["Ya", "Tidak"]
+)
+
+dinas_luar = st.selectbox(
+    "Dinas Luar",
+    ["Ya", "Tidak"]
+)
+
+masa_kerja = st.selectbox(
+    "Masa Kerja",
+    ["Baru", "Lama"]
+)
+
+kinerja = st.selectbox(
+    "Kinerja",
+    ["Baik", "Sangat Baik"]
+)
+
+# =========================================
+# TOMBOL PROSES
+# =========================================
+
+if st.button("💡 Proses Penentuan Bonus"):
+
+    cursor = koneksi.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM rules")
+    rules = cursor.fetchall()
+
+    hasil_bonus = "Tidak Ada Rule Yang Cocok"
+    rule_cocok = None
+
+    # =========================================
+    # RULE ENGINE
+    # =========================================
+
+    for rule in rules:
+
+        rule_id = rule['id']
+
+        cursor.execute(
+            "SELECT parameter, nilai FROM conditions WHERE rule_id=%s",
+            (rule_id,)
+        )
+
+        kondisi = cursor.fetchall()
+
+        cocok = True
+
+        for k in kondisi:
+
+            parameter = k['parameter']
+            nilai = k['nilai']
+
+            if parameter == 'absen' and absen != nilai:
+                cocok = False
+
+            elif parameter == 'lembur' and lembur != nilai:
+                cocok = False
+
+            elif parameter == 'dinas_luar' and dinas_luar != nilai:
+                cocok = False
+
+            elif parameter == 'masa_kerja' and masa_kerja != nilai:
+                cocok = False
+
+            elif parameter == 'kinerja' and kinerja != nilai:
+                cocok = False
+
+        # =========================================
+        # PROSES REASONING
+        # =========================================
+
+        if cocok:
+            hasil_bonus = rule['hasil']
+            rule_cocok = rule_id
+            break
+# =========================================
+    # OUTPUT
+    # =========================================
+
+    st.markdown("---")
+
+    st.subheader("📋 Hasil Reasoning")
+
+    if rule_cocok:
+        st.info(f"Rule yang cocok : Rule {rule_cocok}")
+        st.success(f"Keputusan Bonus : {hasil_bonus}")
+    else:
+        st.warning("⚠️ Tidak ada rule yang memenuhi kriteria.")
