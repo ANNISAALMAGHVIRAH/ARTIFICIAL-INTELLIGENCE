@@ -1,0 +1,97 @@
+import streamlit as st
+import mysql.connector
+
+# Menghubungkan Aplikasi dengan Database
+koneksi = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="",
+    database="sistem_bonus_karyawan"
+)
+
+st.title("Sistem Penentuan Bonus Karyawan")
+
+st.write("Masukkan Data Karyawan")
+
+# Input User
+absen = st.selectbox(
+    "Absen",
+    ["Rajin", "Kurang Rajin"]
+)
+
+lembur = st.selectbox(
+    "Lembur",
+    ["Ya", "Tidak"]
+)
+
+dinas_luar = st.selectbox(
+    "Dinas Luar",
+    ["Ya", "Tidak"]
+)
+
+masa_kerja = st.selectbox(
+    "Masa Kerja",
+    ["Baru", "Lama"]
+)
+
+kinerja = st.selectbox(
+    "Kinerja",
+    ["Baik", "Sangat Baik"]
+)
+
+# Tombol Proses
+if st.button("Proses Penentuan Bonus"):
+
+    cursor = koneksi.cursor(dictionary=True)
+
+    cursor.execute("SELECT * FROM rules")
+    rules = cursor.fetchall()
+
+    hasil_bonus = "Tidak Ada Rule Yang Cocok"
+    rule_cocok = None
+
+    # Mengimplementasikan Rule Engine
+    for rule in rules:
+
+        rule_id = rule['id']
+
+        cursor.execute(
+            "SELECT parameter, nilai FROM conditions WHERE rule_id=%s",
+            (rule_id,)
+        )
+
+        kondisi = cursor.fetchall()
+
+        cocok = True
+    
+        for k in kondisi:
+
+            parameter = k['parameter']
+            nilai = k['nilai']
+
+            if parameter == 'absen' and absen != nilai:
+                cocok = False
+
+            elif parameter == 'lembur' and lembur != nilai:
+                cocok = False
+
+            elif parameter == 'dinas_luar' and dinas_luar != nilai:
+                cocok = False
+
+            elif parameter == 'masa_kerja' and masa_kerja != nilai:
+                cocok = False
+
+            elif parameter == 'kinerja' and kinerja != nilai:
+                cocok = False
+                
+        #Membuat Proses Reasoning
+        if cocok:
+            hasil_bonus = rule['hasil']
+            rule_cocok = rule_id
+            break
+
+    # Output
+    st.subheader("Hasil Reasoning")
+
+    st.write(f"Rule yang cocok : Rule {rule_cocok}")
+    st.success(f"Keputusan Bonus : {hasil_bonus}")
